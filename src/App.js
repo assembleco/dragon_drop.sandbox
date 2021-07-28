@@ -1,86 +1,82 @@
-import logo from './logo.svg';
-
-import React from "react"
+import React, {useState} from 'react';
 import styled from "styled-components"
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd'
+import {
+  closestCenter,
+  DndContext,
+  DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from '@dnd-kit/sortable';
 
-class App extends React.Component {
-  state = {
-    cards: [
-      "a",
-      "b",
-      "c",
-      "d",
-      "e",
-      "f",
-    ],
-  }
+import {SortableItem} from './SortableItem';
+import {Item} from './Item';
 
-  swapFromTo(begin, end) {
-    var cards = this.state.cards
+function App() {
+  const [activeId, setActiveId] = useState(null);
+  const [items, setItems] = useState(['1', '2', '3', '4', '5', '6', '7', '8', '9']);
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
-    if(begin < end)
-      this.setState({ cards:
-        cards.slice(0, begin)
-        .concat(cards.slice(begin + 1, end + 1))
-        .concat(cards[begin])
-        .concat(cards.slice(end + 1, cards.length))
-      })
-    else if(end < begin)
-      this.setState({ cards:
-        cards.slice(0, end)
-        .concat(cards[begin])
-        .concat(cards.slice(end, begin))
-        .concat(cards.slice(begin + 1, cards.length))
-      })
-  }
-
-  render = () => (
-    <DragDropContext
-      onDragEnd={(drop) => this.swapFromTo(drop.source.index, drop.destination.index)}
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
     >
+      <SortableContext
+        items={items}
+        strategy={rectSortingStrategy}
+      >
+        <Container>
+          {items.map(id => <SortableItem key={id} id={id} />)}
+        </Container>
+      </SortableContext>
 
-      <div>
+      <DragOverlay>
+        {activeId ? <Item id={activeId} /> : null}
+      </DragOverlay>
+    </DndContext>
+  );
 
-        <Droppable
-          droppableId="droppable-phase"
-          type="PHASE"
-          direction="horizontal"
-        >
-        {(provided, snapshot) => (
-          <Container
-            ref={provided.innerRef}
-            {...provided.droppableProps}
-          >
-            {provided.placeholder}
+  function handleDragStart(event) {
+    const {active} = event;
 
-          {this.state.cards.map((card, i) => (
-            <Draggable draggableId={`draggable-phase-${i}`} index={i}>
-              {(provided, snapshot) => (
-                <Card
-                  ref={provided.innerRef}
-                  {...provided.draggableProps}
-                  {...provided.dragHandleProps}
-                >
-                  {card}
-                </Card>
-              )}
-            </Draggable>
-          ))}
+    setActiveId(active.id);
+  }
 
-          </Container>
-        )}
-        </Droppable>
+  function handleDragEnd(event) {
+    const {active, over} = event;
 
-      </div>
-    </DragDropContext>
-  )
+    if (active.id !== over.id) {
+      setItems((items) => {
+        const oldIndex = items.indexOf(active.id);
+        const newIndex = items.indexOf(over.id);
+
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+
+    setActiveId(null);
+  }
 }
 
 var Container = styled.div`
+display: flex;
+flex-direction: row;
+flex-wrap: wrap;
 `
 
-var Card = styled.div`
-`
-
-export default App;
+export default App
