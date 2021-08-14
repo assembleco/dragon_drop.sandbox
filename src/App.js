@@ -19,9 +19,7 @@ import {
 import {SortableItem} from './SortableItem';
 import {Item} from './Item';
 
-function App() {
-  const [activeId, setActiveId] = useState(null);
-  const [items, setItems] = useState(['1', '2', '3', '4', '5', '6', '7', '8', '9']);
+var Wrapper = (props) => {
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
@@ -33,43 +31,60 @@ function App() {
     <DndContext
       sensors={sensors}
       collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext
-        items={items}
-        strategy={rectSortingStrategy}
-      >
-        <Container>
-          {items.map(id => <SortableItem key={id} id={id} />)}
-        </Container>
-      </SortableContext>
+      {...props}
+    />
+  )
+}
 
-      <DragOverlay>
-        {activeId ? <Item id={activeId} /> : null}
-      </DragOverlay>
-    </DndContext>
-  );
-
-  function handleDragStart(event) {
-    const {active} = event;
-
-    setActiveId(active.id);
+class App extends React.Component {
+  state = {
+    items: ['1', '2', '3', '4', '5', '6', '7', '8', '9'],
+    activeId: null,
   }
 
-  function handleDragEnd(event) {
+  render = () => {
+    return (
+      <Wrapper
+        onDragStart={this.handleDragStart.bind(this)}
+        onDragEnd={this.handleDragEnd.bind(this)}
+      >
+        <SortableContext
+          items={this.state.items}
+          strategy={rectSortingStrategy}
+        >
+          <Container>
+            {this.state.items.map(id => <SortableItem key={id} id={id} />)}
+          </Container>
+        </SortableContext>
+
+        <DragOverlay>
+          {this.state.activeId ? <Item id={this.state.activeId} /> : null}
+        </DragOverlay>
+      </Wrapper>
+    );
+  }
+
+  handleDragStart(event) {
+    const {active} = event;
+
+    this.setState({ activeId: active.id })
+  }
+
+  handleDragEnd(event) {
     const {active, over} = event;
 
     if (active.id !== over.id) {
-      setItems((items) => {
-        const oldIndex = items.indexOf(active.id);
-        const newIndex = items.indexOf(over.id);
+      const oldIndex = this.state.items.indexOf(active.id);
+      const newIndex = this.state.items.indexOf(over.id);
 
-        return arrayMove(items, oldIndex, newIndex);
-      });
+      this.setItems(arrayMove(this.state.items, oldIndex, newIndex))
     }
 
-    setActiveId(null);
+    this.setState({ activeId: null })
+  }
+
+  setItems(items) {
+    this.setState({ items })
   }
 }
 
