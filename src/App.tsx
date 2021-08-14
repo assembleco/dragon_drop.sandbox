@@ -129,13 +129,16 @@ export default function MultipleContainers({
   trashable = false,
   vertical = false,
 }: Props) {
+  var numberLabels = (num, label) =>
+    createRange(num, (index) => `${label}${index + 1}`)
+
   const [items, setItems] = useState<Items>(
     () =>
       initialItems ?? {
-        A: createRange(itemCount, (index) => `A${index + 1}`),
-        B: createRange(itemCount, (index) => `B${index + 1}`),
-        C: createRange(itemCount, (index) => `C${index + 1}`),
-        D: createRange(itemCount, (index) => `D${index + 1}`),
+        A: numberLabels(itemCount, 'A'),
+        B: numberLabels(itemCount, 'B'),
+        C: numberLabels(itemCount, 'C'),
+        D: numberLabels(itemCount, 'D'),
         [VOID_ID]: [],
       }
   );
