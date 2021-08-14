@@ -178,6 +178,103 @@ export default function MultipleContainers({
     setClonedItems(null);
   };
 
+  const onDragEnd = ({active, over}) => {
+    const activeContainer = findContainer(active.id);
+
+    if (!activeContainer) {
+      setActiveId(null);
+      return;
+    }
+
+    const overId = over?.id || VOID_ID;
+
+    if (overId === VOID_ID) {
+      setItems((items) => ({
+        ...(trashable && over?.id === VOID_ID ? items : clonedItems),
+        [VOID_ID]: [],
+      }));
+      setActiveId(null);
+      return;
+    }
+
+    const overContainer = findContainer(overId);
+
+    if (activeContainer && overContainer) {
+      const activeIndex = items[activeContainer].indexOf(active.id);
+      const overIndex = items[overContainer].indexOf(overId);
+
+      if (activeIndex !== overIndex) {
+        setItems((items) => ({
+          ...items,
+          [overContainer]: arrayMove(
+            items[overContainer],
+            activeIndex,
+            overIndex
+          ),
+        }));
+      }
+    }
+
+    setActiveId(null);
+  }
+
+  const onDragOver = ({active, over}) => {
+    const overId = over?.id;
+
+    if (!overId) {
+      return;
+    }
+
+    const overContainer = findContainer(overId);
+    const activeContainer = findContainer(active.id);
+
+    if (!overContainer || !activeContainer) {
+      return;
+    }
+
+    if (activeContainer !== overContainer) {
+      setItems((items) => {
+        const activeItems = items[activeContainer];
+        const overItems = items[overContainer];
+        const overIndex = overItems.indexOf(overId);
+        const activeIndex = activeItems.indexOf(active.id);
+
+        let newIndex: number;
+
+        if (overId in items) {
+          newIndex = overItems.length + 1;
+        } else {
+          const isBelowLastItem =
+            over &&
+            overIndex === overItems.length - 1 &&
+            active.rect.current.translated &&
+            active.rect.current.translated.offsetTop >
+              over.rect.offsetTop + over.rect.height;
+
+          const modifier = isBelowLastItem ? 1 : 0;
+
+          newIndex =
+            overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
+        }
+
+        return {
+          ...items,
+          [activeContainer]: [
+            ...items[activeContainer].filter((item) => item !== active.id),
+          ],
+          [overContainer]: [
+            ...items[overContainer].slice(0, newIndex),
+            items[activeContainer][activeIndex],
+            ...items[overContainer].slice(
+              newIndex,
+              items[overContainer].length
+            ),
+          ],
+        };
+      });
+    }
+  }
+
   return (
     <DndContext
       sensors={sensors}
@@ -186,101 +283,8 @@ export default function MultipleContainers({
         setActiveId(active.id);
         setClonedItems(items);
       }}
-      onDragOver={({active, over}) => {
-        const overId = over?.id;
-
-        if (!overId) {
-          return;
-        }
-
-        const overContainer = findContainer(overId);
-        const activeContainer = findContainer(active.id);
-
-        if (!overContainer || !activeContainer) {
-          return;
-        }
-
-        if (activeContainer !== overContainer) {
-          setItems((items) => {
-            const activeItems = items[activeContainer];
-            const overItems = items[overContainer];
-            const overIndex = overItems.indexOf(overId);
-            const activeIndex = activeItems.indexOf(active.id);
-
-            let newIndex: number;
-
-            if (overId in items) {
-              newIndex = overItems.length + 1;
-            } else {
-              const isBelowLastItem =
-                over &&
-                overIndex === overItems.length - 1 &&
-                active.rect.current.translated &&
-                active.rect.current.translated.offsetTop >
-                  over.rect.offsetTop + over.rect.height;
-
-              const modifier = isBelowLastItem ? 1 : 0;
-
-              newIndex =
-                overIndex >= 0 ? overIndex + modifier : overItems.length + 1;
-            }
-
-            return {
-              ...items,
-              [activeContainer]: [
-                ...items[activeContainer].filter((item) => item !== active.id),
-              ],
-              [overContainer]: [
-                ...items[overContainer].slice(0, newIndex),
-                items[activeContainer][activeIndex],
-                ...items[overContainer].slice(
-                  newIndex,
-                  items[overContainer].length
-                ),
-              ],
-            };
-          });
-        }
-      }}
-      onDragEnd={({active, over}) => {
-        const activeContainer = findContainer(active.id);
-
-        if (!activeContainer) {
-          setActiveId(null);
-          return;
-        }
-
-        const overId = over?.id || VOID_ID;
-
-        if (overId === VOID_ID) {
-          setItems((items) => ({
-            ...(trashable && over?.id === VOID_ID ? items : clonedItems),
-            [VOID_ID]: [],
-          }));
-          setActiveId(null);
-          return;
-        }
-
-        const overContainer = findContainer(overId);
-
-        if (activeContainer && overContainer) {
-          const activeIndex = items[activeContainer].indexOf(active.id);
-          const overIndex = items[overContainer].indexOf(overId);
-
-          if (activeIndex !== overIndex) {
-            setItems((items) => ({
-              ...items,
-              [overContainer]: arrayMove(
-                items[overContainer],
-                activeIndex,
-                overIndex
-              ),
-            }));
-          }
-        }
-
-        setActiveId(null);
-      }}
+      onDragOver={onDragOver}
+      onDragEnd={onDragEnd}
       cancelDrop={cancelDrop}
       onDragCancel={onDragCancel}
       modifiers={modifiers}
