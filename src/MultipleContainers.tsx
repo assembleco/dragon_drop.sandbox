@@ -141,31 +141,26 @@ export function MultipleContainers({
         D: numberLabels(itemCount, 'D'),
       }
   );
+
   const [clonedItems, setClonedItems] = useState<Items | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
+
   const sensors = useSensors(
     useSensor(PointerSensor),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
   );
-  const findContainer = (id: string) => {
-    if (id in items) {
-      return id;
-    }
 
+  const findContainer = (id: string) => {
+    if (id in items) { return id; }
     return Object.keys(items).find((key) => items[key].includes(id));
   };
 
   const getIndex = (id: string) => {
     const container = findContainer(id);
-
-    if (!container) {
-      return -1;
-    }
-
+    if (!container) { return -1; }
     const index = items[container].indexOf(id);
-
     return index;
   };
 
