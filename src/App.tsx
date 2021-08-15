@@ -110,9 +110,11 @@ interface Props {
   vertical?: boolean;
 }
 
-export const VOID_ID = 'void';
+export default () => (
+  <MultipleContainers/>
+)
 
-export default function MultipleContainers({
+export function MultipleContainers({
   adjustScale = false,
   itemCount = 3,
   cancelDrop,
@@ -139,7 +141,6 @@ export default function MultipleContainers({
         B: numberLabels(itemCount, 'B'),
         C: numberLabels(itemCount, 'C'),
         D: numberLabels(itemCount, 'D'),
-        [VOID_ID]: [],
       }
   );
   const [clonedItems, setClonedItems] = useState<Items | null>(null);
@@ -189,16 +190,7 @@ export default function MultipleContainers({
       return;
     }
 
-    const overId = over?.id || VOID_ID;
-
-    if (overId === VOID_ID) {
-      setItems((items) => ({
-        ...(trashable && over?.id === VOID_ID ? items : clonedItems),
-        [VOID_ID]: [],
-      }));
-      setActiveId(null);
-      return;
-    }
+    const overId = over?.id
 
     const overContainer = findContainer(overId);
 
@@ -301,7 +293,6 @@ export default function MultipleContainers({
         }}
       >
         {Object.keys(items)
-          .filter((key) => key !== VOID_ID)
           .map((containerId) => (
             <SortableContext
               key={containerId}
@@ -357,7 +348,6 @@ export default function MultipleContainers({
         </DragOverlay>,
         document.body
       )}
-      {trashable && activeId ? <Trash /> : null}
     </DndContext>
   );
 }
@@ -375,34 +365,6 @@ function getColor(id: string) {
   }
 
   return undefined;
-}
-
-function Trash() {
-  const {setNodeRef, isOver} = useDroppable({
-    id: VOID_ID,
-  });
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        position: 'fixed',
-        left: '50%',
-        marginLeft: -150,
-        bottom: 20,
-        width: 300,
-        height: 60,
-        borderRadius: 5,
-        border: '1px solid',
-        borderColor: isOver ? 'red' : '#DDD',
-      }}
-    >
-      Drop here to delete
-    </div>
-  );
 }
 
 interface SortableItemProps {
