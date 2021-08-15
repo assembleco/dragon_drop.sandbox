@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import React, {useEffect, useState} from 'react';
 import {createPortal} from 'react-dom';
 import {
@@ -109,10 +111,6 @@ interface Props {
   trashable?: boolean;
   vertical?: boolean;
 }
-
-export default () => (
-  <MultipleContainers/>
-)
 
 export function MultipleContainers({
   adjustScale = false,
